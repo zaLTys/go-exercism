@@ -1,3 +1,3 @@
-module exc3
+module exc4
 
 go 1.23

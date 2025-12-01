@@ -2,6 +2,7 @@ package concurpatterns
 
 import (
 	"context"
+	"sync"
 )
 
 /*
@@ -22,33 +23,49 @@ type Source func(ctx context.Context) (string, error)
 // FetchAll fetches data from multiple sources concurrently.
 // Returns all results if successful, or first error encountered.
 // See README for complete implementation guide.
+
 func FetchAll(ctx context.Context, sources []Source) ([]string, error) {
 	// STEP 1: Check if context is already cancelled
-	// TODO: Implement early return for cancelled context
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	// STEP 2: Create cancellable context
-	// TODO: ctx, cancel := context.WithCancel(ctx)
-	// TODO: defer cancel()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	// STEP 3: Create result channel
 	type result struct {
 		value string
 		err   error
 	}
-	// TODO: results := make(chan result, len(sources))
 
+	results := make(chan result, len(sources))
 	// STEP 4: Create WaitGroup
-	// TODO: var wg sync.WaitGroup
-	// TODO: wg.Add(len(sources))
+	var wg sync.WaitGroup
+	wg.Add(len(sources))
 
 	// STEP 5: Launch worker goroutines (Fan-Out)
-	// TODO: for _, src := range sources { ... }
+	for _, src := range sources {
+		go func() {
+			defer wg.Done()
+			value, err := src(ctx)
+			results <- result{value, err}
+		}()
+	}
 
 	// STEP 6: Close results when workers finish
-	// TODO: go func() { wg.Wait(); close(results) }()
+	go func() { wg.Wait(); close(results) }()
 
 	// STEP 7: Collect results (Fan-In)
-	// TODO: Implement result collection with error handling
+	var got []string
+	for res := range results {
+		if res.err != nil {
+			cancel()
+			return nil, res.err
+		}
+		got = append(got, res.value)
+	}
 
-	return nil, nil
+	return got, nil
 }

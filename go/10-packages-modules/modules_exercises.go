@@ -1,6 +1,7 @@
 package learn
 
-import "fmt"
+// Add imports as you implement.
+// Hint: you'll need "fmt" for Sprintf and/or "strings" for string operations.
 
 // EXERCISE 1: Implement modulesJoinImportPath.
 // modulesJoinImportPath("example.com/m", "auth/token") => "example.com/m/auth/token"
@@ -16,7 +17,7 @@ func modulesJoinImportPath(modulePath, subdir string) string {
 // modulesWithMajorSuffix("example.com/m", 2) => "example.com/m/v2"
 func modulesWithMajorSuffix(modulePath string, major int) string {
 	// TODO: implement
-	_ = fmt.Sprintf // hint: fmt.Sprintf is useful here
+	// Hint: use fmt.Sprintf("%s/v%d", modulePath, major) for major >= 2
 	return ""
 }
 

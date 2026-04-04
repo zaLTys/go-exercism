@@ -23,6 +23,9 @@ func typesInvertMap(in map[string]int) map[int][]string {
 
 // EXERCISE 3: Implement typesGroupByAgeDecade.
 // Example: Age 29 -> "20s", Age 30 -> "30s".
+// Hint: the decade key can be built with fmt.Sprintf("%ds", (age/10)*10)
+//       e.g. age=29 => (29/10)*10 = 20 => "20s"
+//       You'll need to import "fmt" for this.
 func typesGroupByAgeDecade(people []typesPerson) map[string][]string {
 	// TODO: implement
 	return nil

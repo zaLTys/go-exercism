@@ -133,6 +133,51 @@ for range items {
 }
 ```
 
+## Actor Pattern — Goroutine Owns State via Channels
+
+Instead of using a mutex to protect shared state, one goroutine can **own** the data and communicate via channels. Other goroutines send requests and receive responses. This avoids data races by design.
+
+```go
+type cmd struct {
+    kind    string
+    reply   chan int
+}
+
+func newCounter() (inc func() int, val func() int, stop func()) {
+    ch := make(chan cmd)
+
+    go func() {
+        n := 0
+        for c := range ch {
+            switch c.kind {
+            case "inc":
+                n++
+                c.reply <- n
+            case "val":
+                c.reply <- n
+            }
+        }
+    }()
+
+    inc = func() int {
+        r := make(chan int, 1)
+        ch <- cmd{"inc", r}
+        return <-r
+    }
+    val = func() int {
+        r := make(chan int, 1)
+        ch <- cmd{"val", r}
+        return <-r
+    }
+    stop = func() { close(ch) }  // closing channel ends the goroutine's range loop
+
+    return inc, val, stop
+}
+```
+
+Key insight: the goroutine is the **only** one reading/writing `n`. No mutex needed.
+Use `sync.Once` when `stop()` must be safe to call multiple times (closing an already-closed channel panics).
+
 ## Race Detector
 
 ```bash

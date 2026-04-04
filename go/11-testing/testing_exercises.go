@@ -16,8 +16,16 @@ func testingNormalizeWhitespace(s string) string {
 // EXERCISE 2: Implement testingIsPalindromeASCII.
 // Only consider ASCII letters and digits; ignore case and all other characters.
 // "A man, a plan, a canal: Panama" => true
+//
+// Suggested approach (3 steps):
+//  1. Build a cleaned string: loop over s, keep only letters/digits, lowercased.
+//     Use: (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') to test ASCII alphanumeric.
+//     Use: c + ('a' - 'A') to lowercase an uppercase ASCII letter.
+//  2. Compare the cleaned string with its reverse:
+//     reverse by building a second string reading the cleaned one backwards.
+//  3. Return cleaned == reversed.
 func testingIsPalindromeASCII(s string) bool {
-	// TODO: implement (hint: filter to alphanumeric, lowercase, then check palindrome)
+	// TODO: implement
 	return false
 }
 

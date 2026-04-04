@@ -128,6 +128,23 @@ func good() error {
 | `io.Closer` | io | `Close() error` |
 | `fmt.Stringer` | fmt | `String() string` |
 
+## Working with `io.Reader`
+
+The most common way to fully consume an `io.Reader` is `io.ReadAll`:
+
+```go
+import "io"
+
+data, err := io.ReadAll(r)   // reads everything into []byte
+if err != nil {
+    return "", err
+}
+text := string(data)
+```
+
+`strings.NewReader("hello")` creates an `io.Reader` from a string — useful in tests.
+`strings.ToUpper(s)` converts a string to uppercase — like C#'s `s.ToUpper()`.
+
 ## Useful Links
 - [Tour: Interfaces](https://go.dev/tour/methods/9)
 - [Tour: Type switches](https://go.dev/tour/methods/16)

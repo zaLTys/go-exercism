@@ -71,6 +71,16 @@ go test -run TestFoo ./.. # run only tests matching "TestFoo"
 - No class required — top-level functions and variables are fine.
 - `fmt.Println` ≈ `Console.WriteLine`.
 - `strings.TrimSpace` ≈ `string.Trim()`.
+- `strings.Fields(s)` splits a string on any whitespace and returns a `[]string`.
+- `strings.HasPrefix(s, "prefix")` ≈ `s.StartsWith("prefix")`.
+- `strconv.Atoi("42")` parses a string to int — returns `(int, error)`.
+
+## Packages Used in These Exercises
+
+| Package | Key functions |
+|---------|--------------|
+| `strings` | `TrimSpace`, `Fields`, `HasPrefix`, `Split`, `Contains` |
+| `strconv` | `Atoi(s) (int, error)` — parse string to int |
 
 ## Useful Links
 - [Install Go](https://go.dev/doc/install)

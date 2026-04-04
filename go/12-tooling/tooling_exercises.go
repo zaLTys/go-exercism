@@ -18,9 +18,10 @@ func toolingLooksGofmted(src string) bool {
 }
 
 // EXERCISE 3: Implement toolingCountTestFunctions.
-// Count occurrences of "func TestXxx(" in a Go source string.
+// Count occurrences of "func Test" in a Go source string.
 // Simple string scanning is fine (no need to parse the AST).
+// Hint: strings.Count(src, "func Test") does this in one line.
 func toolingCountTestFunctions(src string) int {
-	// TODO: implement (hint: strings.Index in a loop, or strings.Count)
+	// TODO: implement
 	return 0
 }

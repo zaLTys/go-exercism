@@ -1,11 +1,19 @@
 package learn
 
+import (
+	"fmt"
+	"strings"
+	"strconv"
+)
+
 // EXERCISE 1: Implement setupHello.
 // - If name is empty or whitespace => "Hello, world!"
 // - Else => "Hello, <name>!"
 func setupHello(name string) string {
-	// TODO: implement
-	return ""
+	if strings.TrimSpace(name) != "" {
+		return fmt.Sprintf("Hello, %s!", name)
+	}
+	return "Hello, world!"
 }
 
 // EXERCISE 2: Implement setupParseGoVersion.
@@ -13,7 +21,25 @@ func setupHello(name string) string {
 // Return major=1, minor=22 for that example.
 // Return ok=false if you can't parse.
 func setupParseGoVersion(s string) (major int, minor int, ok bool) {
-	// TODO: implement
+	for _, f := range strings.Fields(s) {
+		if !strings.HasPrefix(f, "go") || len(f) <= 2 {
+			continue
+		}
+		rest := f[2:]
+		if rest == "" || rest[0] < '0' || rest[0] > '9' {
+			continue
+		}
+		parts := strings.SplitN(rest, ".", 3)
+		if len(parts) < 2 {
+			continue
+		}
+		maj, err1 := strconv.Atoi(parts[0])
+		min, err2 := strconv.Atoi(parts[1])
+		if err1 != nil || err2 != nil {
+			continue
+		}
+		return maj, min, true
+	}
 	return 0, 0, false
 }
 

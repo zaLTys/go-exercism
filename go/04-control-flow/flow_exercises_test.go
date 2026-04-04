@@ -2,26 +2,80 @@ package learn
 
 import "testing"
 
-func TestFlowGCD(t *testing.T) {
-	if got := flowGCD(54, 24); got != 6 {
-		t.Fatalf("got %d; want 6", got)
+func TestFlowClassifyHTTPStatus(t *testing.T) {
+	tests := []struct {
+		name string
+		code int
+		want string
+	}{
+		{"100 informational", 100, "informational"},
+		{"101 informational", 101, "informational"},
+		{"200 success", 200, "success"},
+		{"201 created", 201, "success"},
+		{"301 redirect", 301, "redirect"},
+		{"404 not found", 404, "client_error"},
+		{"500 internal", 500, "server_error"},
+		{"503 unavailable", 503, "server_error"},
+		{"600 unknown", 600, "unknown"},
+		{"0 unknown", 0, "unknown"},
+		{"99 unknown", 99, "unknown"},
 	}
-	if got := flowGCD(0, 5); got != 5 {
-		t.Fatalf("got %d; want 5", got)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := flowClassifyHTTPStatus(tc.code); got != tc.want {
+				t.Fatalf("flowClassifyHTTPStatus(%d)=%q; want %q", tc.code, got, tc.want)
+			}
+		})
 	}
 }
 
-func TestFlowFizzBuzz(t *testing.T) {
-	if got := flowFizzBuzz(5); got != "1,2,Fizz,4,Buzz" {
-		t.Fatalf("got %q; want %q", got, "1,2,Fizz,4,Buzz")
+func TestFlowBuildGradeReport(t *testing.T) {
+	tests := []struct {
+		name   string
+		scores []int
+		want   string
+	}{
+		{"mixed grades", []int{95, 82, 67}, "A,B,D"},
+		{"nil slice", nil, ""},
+		{"empty slice", []int{}, ""},
+		{"boundary values", []int{100, 90, 89, 60, 59}, "A,A,B,D,F"},
+		{"single score", []int{73}, "C"},
+		{"all F", []int{10, 20, 0}, "F,F,F"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := flowBuildGradeReport(tc.scores); got != tc.want {
+				t.Fatalf("got %q; want %q", got, tc.want)
+			}
+		})
 	}
 }
 
-func TestFlowFirstEven(t *testing.T) {
-	if v, ok := flowFirstEven([]int{1, 3, 4, 6}); !ok || v != 4 {
-		t.Fatalf("got (%d,%v); want (4,true)", v, ok)
-	}
-	if v, ok := flowFirstEven([]int{1, 3, 5}); ok || v != 0 {
-		t.Fatalf("got (%d,%v); want (0,false)", v, ok)
-	}
+func TestFlowFirstMatch(t *testing.T) {
+	items := []string{"banana", "avocado", "apple", "apricot"}
+
+	t.Run("match found", func(t *testing.T) {
+		v, ok := flowFirstMatch(items, "ap")
+		if !ok || v != "apple" {
+			t.Fatalf("got (%q,%v); want (\"apple\",true)", v, ok)
+		}
+	})
+	t.Run("no match", func(t *testing.T) {
+		v, ok := flowFirstMatch(items, "zz")
+		if ok || v != "" {
+			t.Fatalf("got (%q,%v); want (\"\",false)", v, ok)
+		}
+	})
+	t.Run("nil slice", func(t *testing.T) {
+		v, ok := flowFirstMatch(nil, "a")
+		if ok || v != "" {
+			t.Fatalf("got (%q,%v); want (\"\",false)", v, ok)
+		}
+	})
+	t.Run("first item matches", func(t *testing.T) {
+		v, ok := flowFirstMatch(items, "ban")
+		if !ok || v != "banana" {
+			t.Fatalf("got (%q,%v); want (\"banana\",true)", v, ok)
+		}
+	})
 }

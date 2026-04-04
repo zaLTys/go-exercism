@@ -5,14 +5,29 @@ import (
 	"testing"
 )
 
-func TestInterfacesTotalArea(t *testing.T) {
-	shapes := []interfacesShape{
-		interfacesSquare{Side: 2},   // area 4
-		interfacesCircle{Radius: 1}, // area ~3.14159
+func TestInterfacesNotifyAll(t *testing.T) {
+	notifiers := []interfacesNotifier{
+		interfacesEmailNotifier{Sender: "noreply@acme.com"},
+		interfacesSMSNotifier{Provider: "Twilio"},
 	}
-	got := interfacesTotalArea(shapes)
-	if got < 7.1 || got > 7.2 {
-		t.Fatalf("total area=%v; expected about 7.14..", got)
+	results := interfacesNotifyAll(notifiers, "alice", "Hello!")
+	if len(results) != 2 {
+		t.Fatalf("got %d results; want 2", len(results))
+	}
+	wantEmail := "Email from noreply@acme.com to alice: Hello!"
+	if results[0] != wantEmail {
+		t.Fatalf("email: got %q; want %q", results[0], wantEmail)
+	}
+	wantSMS := "SMS via Twilio to alice: Hello!"
+	if results[1] != wantSMS {
+		t.Fatalf("sms: got %q; want %q", results[1], wantSMS)
+	}
+}
+
+func TestInterfacesNotifyAllEmpty(t *testing.T) {
+	results := interfacesNotifyAll(nil, "bob", "test")
+	if len(results) != 0 {
+		t.Fatalf("nil notifiers: got %d results; want 0", len(results))
 	}
 }
 
@@ -37,4 +52,3 @@ func TestInterfacesReadAllUpper(t *testing.T) {
 		t.Fatalf("got %q; want %q", got, "GO ROCKS")
 	}
 }
-

@@ -112,6 +112,20 @@ go build ./...                    # build everything
 go test ./...                     # test everything
 ```
 
+## Use Cases
+
+- **Splitting a growing file**: when `main.go` exceeds ~300 lines, extract related functions into `auth/`, `db/`, `api/` packages — each focused on one responsibility
+- **`internal/` for private API**: DB schema types, raw SQL helpers, config structs — things your library uses but external consumers shouldn't depend on
+- **Publishing a v2**: update `go.mod` module path to `module example.com/mylib/v2` and all internal imports; consumers update their import paths
+
+## Common Mistakes & Caveats
+
+- **Circular imports are a compile error** — if package A imports B and B imports A, the build fails. Fix: extract shared types into a third package (e.g. `types/`) that both import, or merge the packages.
+- **Over-packaging** — don't create a package per file or per struct. Go packages are larger than C# classes; group by coherent responsibility. A `util` package that contains everything is also an anti-pattern.
+- **Package name ≠ directory name is confusing** — `package utils` in a directory called `helpers` is allowed but breaks the convention; keep them the same.
+- **`init()` is hard to test and reason about** — avoid complex logic in `init()`; prefer explicit initialization called from `main()`.
+- **`go.sum` conflicts in PRs** — when multiple branches add dependencies, `go.sum` merge conflicts are common; just run `go mod tidy` after merging to fix them.
+
 ## Useful Links
 - [How to Write Go Code](https://go.dev/doc/code)
 - [Go Modules Reference](https://go.dev/ref/mod)

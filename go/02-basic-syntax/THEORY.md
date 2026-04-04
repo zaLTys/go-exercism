@@ -97,6 +97,27 @@ func good() {
 | `s.StartsWith("go")` | `strings.HasPrefix(s, "go")` |
 | `string.IsNullOrWhiteSpace(s)` | `strings.TrimSpace(s) == ""` |
 
+## Use Cases
+
+- **Text utilities**: trimming, joining, splitting strings — the `strings` package covers almost everything you need without custom helpers
+- **Config parsing**: reading `KEY=VALUE` lines from a file using `strings.Split`, `strings.TrimSpace`, and `strings.HasPrefix`
+- **Building a greeting service**: combine variable declarations, string formatting with `fmt.Sprintf`, and simple `if` logic
+
+## Common Mistakes & Caveats
+
+- **`:=` only works inside functions** — package-level variables must use `var x = ...`; using `:=` at package level is a syntax error
+- **Unused variables are compile errors** — `x := 5` then never using `x` won't compile; use `_` to explicitly discard: `_ = x`
+- **Variable shadowing with `:=`** — a new `:=` inside an inner block creates a new variable, not an update:
+  ```go
+  x := 1
+  if true {
+      x := 2   // NEW variable — outer x is still 1!
+      _ = x
+  }
+  ```
+- **Strings are immutable UTF-8 byte sequences** — indexing `s[i]` gives a `byte` (uint8), not a character; use `[]rune(s)` for character-level access
+- **`fmt.Println` adds spaces between args; `fmt.Printf` does not** — `fmt.Printf("hello %s\n", name)` is what you want for formatted output
+
 ## Useful Links
 - [Tour of Go — Basics](https://go.dev/tour/basics)
 - [Go Spec](https://go.dev/ref/spec)

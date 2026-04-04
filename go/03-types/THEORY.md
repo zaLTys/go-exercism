@@ -127,6 +127,32 @@ person := &Person{Name: "Paul"}
 fmt.Println(person.Name)  // no need for (*person).Name
 ```
 
+## Use Cases
+
+- **Word frequency counter**: `map[string]int` — range over words, increment the count for each
+- **Stack or queue**: `[]T` with `append` (push) and slice indexing (peek/pop)
+- **Config struct**: group related settings into a struct with sensible zero-value defaults
+- **Inverting a lookup**: `map[string]int` → `map[int][]string` (the Exercise 2 pattern is used constantly in real code)
+
+## Common Mistakes & Caveats
+
+- **`append` returns a new slice — always reassign it:**
+  ```go
+  s = append(s, x)   // correct
+  append(s, x)       // ! SILENT BUG — result discarded, s is unchanged
+  ```
+- **Sub-slices share the backing array** — modifying `sub[0]` also changes the original:
+  ```go
+  a := []int{1, 2, 3}
+  b := a[1:]   // ! b and a share the same backing array
+  b[0] = 99   // ! a is now [1, 99, 3] — you changed a through b
+  ```
+  Use `append([]int(nil), a[1:]...)` to get an independent copy.
+- **Nil map panics on write** — `var m map[string]int; m["x"] = 1` panics; always initialize: `m := make(map[string]int)`
+- **Map iteration order is randomized** — Go deliberately randomizes it to prevent code from depending on order; never assume a map iterates in insertion order
+- **Struct comparison** — structs with slice or map fields cannot be compared with `==`; use `reflect.DeepEqual` or a custom method for tests
+- **Pointer to loop variable** — before Go 1.22, `&item` in a `for _, item := range items` loop gives the same address each iteration
+
 ## Useful Links
 - [Tour: Types](https://go.dev/tour/moretypes)
 - [Go maps in action](https://go.dev/blog/maps)

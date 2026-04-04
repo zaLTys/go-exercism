@@ -126,6 +126,30 @@ func safeRun(f func()) (err error) {
 
 **Rule:** Don't use `panic` for normal error handling. Use it only for programmer errors (impossible states), then let `recover` at the boundary turn it into an error if needed.
 
+## Use Cases
+
+- **API layer wrapping DB errors**: `return fmt.Errorf("getUser(%d): %w", id, err)` — callers see context, and `errors.Is(err, sql.ErrNoRows)` still works through the chain
+- **Validation with multiple errors**: collect field errors into a slice, then `errors.Join(errs...)` — callers get one error that contains all failures
+- **HTTP handler translating errors**: check `errors.Is(err, ErrNotFound)` → 404, `errors.As(err, &validErr)` → 400, everything else → 500
+- **Defer for guaranteed cleanup**: `defer rows.Close()` after a DB query — runs even if the processing loop returns an error
+
+## Common Mistakes & Caveats
+
+- **Never ignore errors** — `result, _ = riskyOp()` hides real bugs; if you truly don't care, document why with a comment
+- **Don't use `fmt.Errorf` without `%w` if callers need to inspect the cause**:
+  ```go
+  return fmt.Errorf("failed: %v", err)   // ! %v loses the original — errors.Is returns false
+  return fmt.Errorf("failed: %w", err)   // ✓ %w wraps — errors.Is traverses the chain
+  ```
+- **Avoid over-wrapping error chains** — each layer adds its own context; don't wrap the same error 5 times with the same message
+- **Don't use `panic` for expected error conditions** — panic is for programmer mistakes (index out of bounds, impossible state), not for user input or IO errors. If a caller can reasonably recover, return an error.
+- **Sentinel errors should be exported, unexported ones kept private**:
+  ```go
+  var ErrNotFound = errors.New("not found")   // exported — callers can check with errors.Is
+  var errInternal = errors.New("internal")    // unexported — callers can't depend on it
+  ```
+- **Value vs pointer receiver on error types**: for small structs, a value receiver `func (e MyError) Error() string` is fine. Pointer receivers on errors can cause the nil-interface-wrapping-nil-pointer gotcha.
+
 ## Useful Links
 - [Tour: Errors](https://go.dev/tour/methods/19)
 - [Error handling and Go](https://go.dev/blog/error-handling-and-go)

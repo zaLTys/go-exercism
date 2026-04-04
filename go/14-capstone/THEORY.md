@@ -109,6 +109,29 @@ func (r Runner) String() string {
 - **`errors.Join`** is the standard for multi-error aggregation (Go 1.20+)
 - **Table-driven tests** with named subtests are the idiomatic test style
 
+## Real-World Variants of This Pattern
+
+This worker pool is a simplified version of patterns you'll see constantly in production Go:
+
+- **HTTP batch processor**: fan out N API calls, collect results, return aggregated response
+- **Database bulk importer**: bounded goroutine pool reads rows, writes to DB, collects insert errors
+- **File processor**: scan a directory tree, process each file concurrently, report all failures at the end
+- **Build system**: `go build ./...` itself uses a worker pool internally for parallel compilation
+
+## Common Mistakes & Caveats
+
+- **Not closing the `jobs` channel causes workers to block forever** — the `for i := range jobs` loop only exits when `jobs` is closed; the job-feeding goroutine must always close it, even on cancellation (`defer close(jobs)`)
+- **Not closing `results` causes the collector to block forever** — `results` should be closed by the goroutine that waits for all workers (`wg.Wait()` then `close(results)`)
+- **Race on `stoppedEarly`** — if the job-feeder goroutine sets `stoppedEarly = true` while the collector is reading it, you have a data race; use an `atomic` or a channel signal instead:
+  ```go
+  // Safe alternative: read ctx.Err() after collecting all results
+  if ctx.Err() != nil {
+      return errors.Join(ctx.Err(), combined)
+  }
+  ```
+- **Buffering channels affects throughput** — unbuffered `jobs` means each worker handoff is synchronous; a buffered channel (size = len(tasks)) allows the feeder to run ahead without blocking, but uses more memory
+- **`errors.Join` ignores nil entries** — you don't need to filter them out; `errors.Join(nil, err, nil)` returns just `err`
+
 ## Useful Links
 - [Go Concurrency Patterns: Pipelines](https://go.dev/blog/pipelines)
 - [Go Concurrency Patterns: Context](https://go.dev/blog/context)

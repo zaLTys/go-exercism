@@ -82,6 +82,20 @@ go test -run TestFoo ./.. # run only tests matching "TestFoo"
 | `strings` | `TrimSpace`, `Fields`, `HasPrefix`, `Split`, `Contains` |
 | `strconv` | `Atoi(s) (int, error)` — parse string to int |
 
+## Use Cases
+
+- **CLI tool**: `go mod init github.com/you/mytool` → write `cmd/mytool/main.go` → `go build -o mytool ./cmd/mytool`
+- **Shared library**: module without a `main` package, published as `github.com/you/mylib` and imported by other modules
+- **Monorepo with multiple commands**: one `go.mod` at root, multiple `cmd/` subdirectories each with their own `main.go`
+
+## Common Mistakes & Caveats
+
+- **`go run file.go` vs `go run .`** — if your package has multiple files, `go run file.go` misses them; use `go run .` to compile the whole directory
+- **Module path matters if you publish** — if you plan to push to GitHub, use `github.com/username/repo` as the module path from the start; renaming later is painful
+- **Never edit `go.sum` manually** — it's a cryptographic lock file maintained by the `go` command; run `go mod tidy` instead
+- **`go mod tidy` is your friend** — run it after adding or removing imports to keep `go.mod` and `go.sum` in sync
+- **Unused imports are compile errors** — unlike C#, Go refuses to compile if you have an import you're not using; this keeps codebases clean but surprises newcomers
+
 ## Useful Links
 - [Install Go](https://go.dev/doc/install)
 - [Getting Started Tutorial](https://go.dev/doc/tutorial/getting-started)

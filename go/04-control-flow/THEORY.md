@@ -117,6 +117,41 @@ for i := 0; i < 3; i++ {
 }
 ```
 
+## Use Cases
+
+- **Retry loop**: `for attempts := 0; attempts < maxRetries; attempts++` with a `break` on success
+- **State machine**: `switch state { case "idle": ... case "running": ... }` — clean and exhaustive
+- **Resource cleanup**: `defer f.Close()` immediately after `os.Open` — runs even if later code panics
+- **Early return guard**: `if err := validate(input); err != nil { return err }` — keeps the happy path unindented
+
+## Common Mistakes & Caveats
+
+- **`defer` in a loop opens resource leaks** — each iteration schedules a new defer; they all fire at function return, not at loop end:
+  ```go
+  for _, path := range paths {
+      f, _ := os.Open(path)
+      defer f.Close()   // ! ALL files stay open until function returns — not end of iteration
+  }
+  // Fix: wrap in an inner function so defer fires per iteration
+  for _, path := range paths {
+      func() {
+          f, _ := os.Open(path)
+          defer f.Close()  // now defers at inner-func return ✓
+      }()
+  }
+  ```
+- **`defer` arguments are evaluated immediately** — the value is captured at the `defer` line, not when it runs:
+  ```go
+  x := 1
+  defer fmt.Println(x)   // ! captures x=1 NOW — prints 1, even though x changes below
+  x = 2
+  // ! If you want to capture the final value, use a closure:
+  defer func() { fmt.Println(x) }()   // captures x by reference — prints 2
+  ```
+- **`switch` has no implicit fallthrough** — unlike C/C#, each case exits automatically; use `fallthrough` explicitly (rare)
+- **Loop variable capture in goroutines (pre-Go 1.22)** — `go func() { fmt.Println(i) }()` inside a range loop captures the variable by reference, not value; by the time the goroutine runs, `i` is the final value. Fix: `i := i` before the `go` statement, or pass as argument `go func(n int) { ... }(i)`
+- **`for range` on a nil slice is safe** — it simply iterates zero times; no nil check needed
+
 ## Useful Links
 - [Tour: Flow control](https://go.dev/tour/flowcontrol)
 - [Go Spec: Statements](https://go.dev/ref/spec#Statements)

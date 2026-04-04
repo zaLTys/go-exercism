@@ -94,6 +94,32 @@ var i Incr = &Counter{}   // OK — *Counter has Inc() (pointer receiver)
 var i Incr = Counter{}    // COMPILE ERROR — Counter does not have Inc()
 ```
 
+## Use Cases
+
+- **HTTP handler**: `type App struct{ db *sql.DB }` with `func (a *App) HandleUsers(w http.ResponseWriter, r *http.Request)` — pointer receiver because `App` holds state
+- **Custom sort**: implement `Len()`, `Less()`, `Swap()` on a named slice type to use `sort.Sort`
+- **Builder / fluent API**: methods return `*T` to allow chaining: `q.Where(...).Limit(10).OrderBy("name")`
+- **`fmt.Stringer`**: implement `String() string` on your type and `fmt.Println` will automatically use it
+
+## Common Mistakes & Caveats
+
+- **Cannot call pointer receiver on a non-addressable value** — map values and function return values are not addressable:
+  ```go
+  m := map[string]Counter{}
+  m["x"].Inc()   // COMPILE ERROR — m["x"] is not addressable
+  // Fix: take a copy, modify, put back:
+  c := m["x"]; c.Inc(); m["x"] = c
+  ```
+- **Mixing pointer and value receivers breaks interface satisfaction** — if some methods are pointer, some value, only `*T` satisfies interfaces with those methods, not `T`. Stick to one kind per type.
+- **Pointer receiver on a nil receiver can be valid** — Go allows calling pointer receiver methods on a nil pointer if the method handles it:
+  ```go
+  func (n *Node) String() string {
+      if n == nil { return "<nil>" }
+      return n.Value
+  }
+  ```
+  This is an advanced pattern — use it deliberately, not accidentally.
+
 ## Useful Links
 - [Tour: Methods](https://go.dev/tour/methods)
 - [Go Wiki: MethodSets](https://go.dev/wiki/MethodSets)

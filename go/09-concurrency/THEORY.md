@@ -196,6 +196,41 @@ Always run with `-race` in CI. A data race is undefined behavior — it will cor
 | Loop variable capture in goroutine (pre-Go 1.22) | Pass as argument `go f(i)` |
 | Mutex + defer `wg.Done()` out of order | `defer wg.Done()` immediately after `wg.Add(1)` |
 
+## Use Cases
+
+- **Fan-out / fan-in**: scatter N items to a worker pool, collect results in order — the classic pipeline pattern
+- **Parallel HTTP requests with rate limiting**: bounded goroutine pool (semaphore via buffered channel) to fetch URLs concurrently without hammering the server
+- **Background periodic task**: `for { select { case <-ticker.C: doWork(); case <-ctx.Done(): return } }`
+- **Cache owned by one goroutine**: actor pattern with channels — no mutex needed, state never leaves the owning goroutine
+
+## Common Mistakes & Caveats
+
+- **Goroutine leaks** — a goroutine blocked on a channel send/receive that nobody ever reads from runs forever. Always give goroutines a way to exit:
+  ```go
+  // ! BAD — goroutine leaks if nobody reads results; runs until process exit
+  go func() { results <- compute() }()
+
+  // GOOD — goroutine respects cancellation ✓
+  go func() {
+      select {
+      case results <- compute():
+      case <-ctx.Done():
+      }
+  }()
+  ```
+- **Deadlock**: if all goroutines are blocked (e.g. unbuffered channel with no receiver), Go's runtime detects it and panics:
+  ```
+  fatal error: all goroutines are asleep - deadlock!
+  ```
+  Common cause: `ch := make(chan int); ch <- 1` with no goroutine reading from `ch`.
+- **Closing a channel twice panics** — only the sender should close; if multiple goroutines might close, use `sync.Once`:
+  ```go
+  var once sync.Once
+  close := func() { once.Do(func() { close(ch) }) }
+  ```
+- **Don't use goroutines for everything** — goroutines add synchronization complexity; for small, fast, sequential work they're net overhead. Use concurrency when tasks are truly independent and parallel execution helps.
+- **`sync.Mutex` vs channels**: use a mutex when protecting a shared data structure; use channels when coordinating work or ownership between goroutines. Both are valid — match the tool to the problem.
+
 ## Useful Links
 - [Tour: Goroutines & Channels](https://go.dev/tour/concurrency)
 - [Go Concurrency Patterns: Pipelines](https://go.dev/blog/pipelines)

@@ -118,6 +118,32 @@ func TestMain(m *testing.M) {
 }
 ```
 
+## Use Cases
+
+- **HTTP handler testing**: use `net/http/httptest` — no real server needed:
+  ```go
+  w := httptest.NewRecorder()
+  r := httptest.NewRequest("GET", "/", nil)
+  handler.ServeHTTP(w, r)
+  if w.Code != 200 { t.Fatalf("got %d", w.Code) }
+  ```
+- **Testing with dependency injection**: pass a `bytes.Buffer` instead of `os.Stdout` so you can assert on output
+- **Parallel tests**: call `t.Parallel()` at the start of a subtest to run it concurrently with other parallel subtests — speeds up slow I/O-heavy test suites
+
+## Common Mistakes & Caveats
+
+- **Missing `t.Helper()`** — without it, test failure lines point into your helper function, not the test that called it. Always call `t.Helper()` as the first line of any assertion helper:
+  ```go
+  func assertEq(t *testing.T, got, want int) {
+      t.Helper()   // without this, errors blame assertEq, not the caller
+      if got != want { t.Fatalf("got %d; want %d", got, want) }
+  }
+  ```
+- **`log.Fatal` in tests calls `os.Exit`** — this skips all deferred cleanup and confuses the test runner; always use `t.Fatal` / `t.Fatalf` in tests
+- **`t.Fatal` inside a goroutine doesn't stop the test goroutine** — calling `t.Fatal` from a spawned goroutine panics; use `t.Error` + communicate back via a channel, or use `sync.WaitGroup` + check errors after
+- **Shared mutable state between subtests causes flakiness** — if subtests share a map or slice, run them with `t.Parallel()` will race; make each subtest independent or use a fresh copy of state
+- **Don't use `TestMain` for per-test setup** — `TestMain` runs once for the whole package; use `t.Cleanup(func() { ... })` for per-test teardown
+
 ## Useful Links
 - [testing package docs](https://pkg.go.dev/testing)
 - [Go Wiki: TableDrivenTests](https://go.dev/wiki/TableDrivenTests)

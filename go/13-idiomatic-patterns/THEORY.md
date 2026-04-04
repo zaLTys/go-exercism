@@ -152,6 +152,30 @@ func loadUser(id int) (*User, error) {
 - "Clear is better than clever."
 - "Gofmt's style is no one's favorite, yet gofmt is everyone's favorite."
 
+## Use Cases
+
+- **Functional options for a client**: `NewClient(WithTimeout(5*time.Second), WithRetries(3))` — the cleanest pattern for structs with many optional config fields
+- **`io.Writer` as output sink in a CLI tool**: `func Run(out io.Writer, args []string) error` — the caller passes `os.Stdout` in production and `bytes.Buffer` in tests; no mocking framework needed
+- **Embedding to promote methods**: `type Server struct { *http.ServeMux; db *sql.DB }` — `Server` gets all `ServeMux` methods without inheritance
+- **`sort.Slice` with a closure** instead of implementing `sort.Interface` for one-off sorts: `sort.Slice(users, func(i, j int) bool { return users[i].Name < users[j].Name })`
+
+## Common Mistakes & Caveats
+
+- **Don't define interfaces next to their implementation** — define the interface in the *consuming* package, not alongside the concrete type. The concrete type shouldn't import or know about the interface. This is the opposite of C# where you typically put `IFoo` and `Foo` side by side.
+- **Avoid Java/C#-style getter/setter naming**:
+  ```go
+  // C# style — avoid in Go
+  func (u *User) GetName() string { return u.name }
+  func (u *User) SetName(n string) { u.name = n }
+
+  // Go style — simple accessor method
+  func (u *User) Name() string { return u.name }
+  ```
+- **Don't create a paired `FooInterface` for every `Foo` struct** — Go's duck typing means you rarely need both. Define the interface only when you have multiple implementations or a consuming package that needs to abstract.
+- **Avoid `any` (interface{}) as a design escape hatch** — if everything is `any`, you've lost type safety and compiler help. Prefer concrete types; use generics (Go 1.18+) when you genuinely need type-parameterised code.
+- **"A little copying is better than a little dependency"** — don't reach for a library for a 5-line function. Go's standard library is rich; check it first. Adding a dependency is a long-term maintenance burden.
+- **Don't over-engineer early** — idiomatic Go starts with the simplest working thing (a function, a struct) and adds interfaces/patterns only when a second use case appears. "Clear is better than clever."
+
 ## Useful Links
 - [Effective Go](https://go.dev/doc/effective_go)
 - [Code Review Comments](https://go.dev/wiki/CodeReviewComments)

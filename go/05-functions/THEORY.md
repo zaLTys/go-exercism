@@ -120,6 +120,58 @@ doubled := apply([]int{1, 2, 3}, func(n int) int { return n * 2 })
 
 Each package can have one or more `init()` functions — they run before `main()` and before any other code in the package. Use sparingly.
 
+## Use Cases
+
+- **Middleware / decorator**: a function that wraps another function to add logging, timing, or auth:
+  ```go
+  func withLogging(fn func() error) func() error {
+      return func() error {
+          log.Println("starting")
+          err := fn()
+          log.Println("done:", err)
+          return err
+      }
+  }
+  ```
+- **Retry with backoff**: accept a `func() error` as an argument, call it up to N times
+- **Functional options**: accept `...Option` where `type Option func(*Config)` — covered in detail in topic 13
+
+## Common Mistakes & Caveats
+
+- **Never silently ignore errors** — `result, _ := parse(s)` buries bugs; at minimum log them:
+  ```go
+  result, err := parse(s)
+  if err != nil {
+      return 0, fmt.Errorf("parse failed: %w", err)
+  }
+  ```
+- **Closure captures variable by reference** — in a loop before Go 1.22, closures share the loop variable:
+  ```go
+  for i := 0; i < 3; i++ {
+      fns = append(fns, func() int { return i })  // ! all return 3 — they share ONE variable i
+  }
+  // Fix: create a new binding per iteration
+  for i := 0; i < 3; i++ {
+      i := i  // ! new i variable scoped to this iteration
+      fns = append(fns, func() int { return i })  // each closure has its own i ✓
+  }
+  ```
+- **Calling a nil function panics** — `var f func(); f()` panics with "nil function"; check `if f != nil` before calling
+- **Named returns + defer = subtle bugs** — a deferred function can modify named return values:
+  ```go
+  func risky() (result int, err error) {
+      defer func() {
+          if err != nil { result = -1 }  // ! overwrites result AFTER "return" already set it
+      }()
+      ...
+  }
+  ```
+  This is sometimes intentional (adding context on error) but surprises people who don't expect it.
+- **Never silently discard errors** — `result, _ = parse(s)` compiles fine but hides real bugs:
+  ```go
+  n, _ := strconv.Atoi(s)   // ! if s is "abc", n=0 silently — always handle the error
+  ```
+
 ## Useful Links
 - [Tour: Functions](https://go.dev/tour/basics/4)
 - [Tour: Closures](https://go.dev/tour/moretypes/25)

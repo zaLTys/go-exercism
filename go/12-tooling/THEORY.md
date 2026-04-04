@@ -91,6 +91,25 @@ formatted, err := format.Source([]byte(src))
 - **GoLand**: Built-in Go support with all tools integrated.
 - **Neovim**: `gopls` language server + conform.nvim for formatting.
 
+## Use Cases
+
+- **CI pipeline** — a minimal Go CI check:
+  ```bash
+  go fmt ./... && git diff --exit-code   # fail if any file needs formatting
+  go vet ./...                            # fail on static analysis issues
+  go test -race ./...                     # fail on test failures or races
+  ```
+- **Pre-commit hook**: run `go fmt` + `go vet` on staged files before each commit
+- **Coverage gate**: `go test -coverprofile=c.out ./... && go tool cover -func=c.out | grep total` — check total coverage percentage in CI
+
+## Common Mistakes & Caveats
+
+- **`go vet` is not a full linter** — it only checks for a small set of well-defined bugs; consider adding `staticcheck` or `golangci-lint` to catch more issues (unused parameters, shadowed errors, style violations)
+- **The race detector doesn't catch all races** — it only detects races that actually execute during the test run; 100% test coverage with `-race` still doesn't guarantee race-freedom of all code paths
+- **Don't skip `go fmt` thinking "the IDE formats it"** — CI should still enforce it; different team members may have different editor configs or formatters
+- **`go build` succeeds even with warnings** — Go has no warnings, only errors; use `go vet` to catch the things the compiler intentionally doesn't block
+- **`go fix` is mostly safe but always review** — it rewrites code to use new APIs, but review the diff before committing, especially for large codebases
+
 ## Useful Links
 - [gofmt blog](https://go.dev/blog/gofmt)
 - [Command documentation](https://go.dev/doc/cmd)

@@ -1,6 +1,5 @@
-# Go Learning Path for .NET Developers
-
-A hands-on Go curriculum built for experienced .NET/C# developers who want to get productive in Go fast. Structured around the mental model shifts that matter most — explicit errors, implicit interfaces, goroutines, and the Go toolchain.
+# Go Learning Path
+A hands-on Go curriculum built for developers who want to get productive in Go fast. Structured around the mental model shifts that matter most — explicit errors, implicit interfaces, goroutines, and the Go toolchain.
 
 ## Structure
 
